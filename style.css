@@ -511,3 +511,142 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   .stat-val { font-size: 22px; }
   .container { padding: 1rem; }
 }
+
+/* ===== SETUP BUTTONS ===== */
+.setup-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+.setup-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--border2);
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.15s;
+}
+
+.radio-btn.sel-setup1 {
+  background: #111829;
+  border-color: #3a6fdb;
+  color: #7aaeff;
+}
+
+.radio-btn.sel-setup1 .setup-num {
+  background: #3a6fdb;
+  color: #fff;
+}
+
+.radio-btn.sel-setup2 {
+  background: #1a1129;
+  border-color: #9a3adb;
+  color: #cc7aff;
+}
+
+.radio-btn.sel-setup2 .setup-num {
+  background: #9a3adb;
+  color: #fff;
+}
+
+/* ===== SETUP TAG BADGE ===== */
+.setup-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+}
+
+.setup-tag.setup1 {
+  background: #111829;
+  color: #7aaeff;
+  border: 1px solid #3a6fdb;
+}
+
+.setup-tag.setup2 {
+  background: #1a1129;
+  color: #cc7aff;
+  border: 1px solid #9a3adb;
+}
+
+/* ===== SETUP COMPARISON BOXES ===== */
+.setup-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.setup-box {
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  border: 1px solid;
+}
+
+.setup1-box { background: #0d1118; border-color: #3a6fdb; }
+.setup2-box { background: #110d18; border-color: #9a3adb; }
+
+.setup-box-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.setup1-box .setup-box-label { color: #7aaeff; }
+.setup2-box .setup-box-label { color: #cc7aff; }
+
+.setup-box-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 5px 0;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+}
+
+.setup-box-row:last-child { border-bottom: none; }
+.setup-box-row span:last-child { font-weight: 600; color: var(--text); }
+
+/* ===== DELETE BUTTON ===== */
+.delete-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 11px;
+  font-family: 'DM Sans', sans-serif;
+  padding: 3px 7px;
+  line-height: 1;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.delete-btn:hover {
+  background: var(--red-bg);
+  border-color: var(--red-border);
+  color: var(--red);
+}
+
+/* ===== TC-LIQ line in log ===== */
+.tc-liq {
+  font-size: 12px;
+  color: var(--gold);
+  margin-top: 1px;
+  opacity: 0.8;
+}
