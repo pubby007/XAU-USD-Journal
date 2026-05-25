@@ -160,6 +160,14 @@ function renderLog() {
   }).join('');
 }
 
+// ===== DELETE TRADE =====
+function deleteTrade(id) {
+  if (!confirm('Delete this trade? This cannot be undone.')) return;
+  state.trades = state.trades.filter(t => t.id !== id);
+  localStorage.setItem('xau_trades', JSON.stringify(state.trades));
+  renderStats();
+}
+
 // ===== RENDER STATS =====
 function renderStats() {
   const t = state.trades;
@@ -207,6 +215,7 @@ function renderStats() {
         <span class="sr-dir ${x.dir}">${x.dir.toUpperCase()}</span>
         <span class="sr-time">${fmt12(x.entryUS)} EST</span>
         <span class="sr-pnl ${pc}">${p}</span>
+        <button class="delete-btn" onclick="deleteTrade(${x.id})" title="Delete trade">✕</button>
       </div>`;
   }).join('');
 }
