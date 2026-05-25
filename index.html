@@ -38,10 +38,19 @@
 
       <div class="card">
         <div class="card-label">Session Date</div>
-        <input type="date" id="trade-date" class="input" />
+        <input type="date" id="trade-date" class="input" style="margin-bottom:1rem" />
+        <div class="field-label" style="margin-bottom:8px">Setup</div>
+        <div class="radio-row" id="setup-group">
+          <button class="radio-btn setup-btn" onclick="pick('setup','setup1',this)">
+            <span class="setup-num">1</span> Setup 1
+          </button>
+          <button class="radio-btn setup-btn" onclick="pick('setup','setup2',this)">
+            <span class="setup-num">2</span> Setup 2
+          </button>
+        </div>
       </div>
 
-      <div class="card">
+      <div class="card" id="liq-card">
         <div class="card-label">Liquidity / Kill Zone</div>
         <div class="time-row">
           <div class="time-col">
@@ -122,6 +131,8 @@
     <div id="tab-log" class="tab-content">
       <div class="filter-row">
         <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+        <button class="filter-btn" onclick="setFilter('setup1',this)">Setup 1</button>
+        <button class="filter-btn" onclick="setFilter('setup2',this)">Setup 2</button>
         <button class="filter-btn" onclick="setFilter('buy',this)">Buy</button>
         <button class="filter-btn" onclick="setFilter('sell',this)">Sell</button>
         <button class="filter-btn" onclick="setFilter('win',this)">Wins</button>
@@ -137,6 +148,14 @@
 
     <!-- ===== STATS TAB ===== -->
     <div id="tab-stats" class="tab-content">
+
+      <!-- Setup filter -->
+      <div class="filter-row" style="margin-bottom:1rem">
+        <button class="filter-btn active" onclick="setStatsFilter('all',this)">All Setups</button>
+        <button class="filter-btn" onclick="setStatsFilter('setup1',this)">Setup 1</button>
+        <button class="filter-btn" onclick="setStatsFilter('setup2',this)">Setup 2</button>
+      </div>
+
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-label">Total Trades</div>
@@ -153,6 +172,22 @@
         <div class="stat-card">
           <div class="stat-label">Avg Win</div>
           <div class="stat-val green" id="s-aw">—</div>
+        </div>
+      </div>
+
+      <!-- Per-setup comparison -->
+      <div class="setup-compare">
+        <div class="setup-box setup1-box">
+          <div class="setup-box-label">Setup 1</div>
+          <div class="setup-box-row"><span>Trades</span><span id="s1-total">0</span></div>
+          <div class="setup-box-row"><span>Win Rate</span><span id="s1-wr">—</span></div>
+          <div class="setup-box-row"><span>Net P&L</span><span id="s1-pnl" class="green">$0</span></div>
+        </div>
+        <div class="setup-box setup2-box">
+          <div class="setup-box-label">Setup 2</div>
+          <div class="setup-box-row"><span>Trades</span><span id="s2-total">0</span></div>
+          <div class="setup-box-row"><span>Win Rate</span><span id="s2-wr">—</span></div>
+          <div class="setup-box-row"><span>Net P&L</span><span id="s2-pnl" class="green">$0</span></div>
         </div>
       </div>
 
