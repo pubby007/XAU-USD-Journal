@@ -477,10 +477,31 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 .sr-dir.buy  { color: var(--green); }
 .sr-dir.sell { color: var(--red); }
 .sr-time  { color: var(--text2); font-size: 12px; }
-.sr-pnl   { font-weight: 600; text-align: right; }
+.sr-pnl   { font-weight: 600; text-align: right; flex: 1; }
 .sr-pnl.win  { color: var(--green); }
 .sr-pnl.loss { color: var(--red); }
 .sr-pnl.be   { color: var(--text2); }
+
+.delete-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 11px;
+  font-family: 'DM Sans', sans-serif;
+  padding: 3px 7px;
+  line-height: 1;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  margin-left: 6px;
+}
+
+.delete-btn:hover {
+  background: var(--red-bg);
+  border-color: var(--red-border);
+  color: var(--red);
+}
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 480px) {
