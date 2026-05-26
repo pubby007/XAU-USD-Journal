@@ -1,22 +1,11 @@
 // =============================================
 //  SUPABASE CONFIG
-//  Paste your keys here when ready.
-//  Leave as-is to use localStorage instead.
 // =============================================
-const SUPABASE_URL = 'https://qolqxegxhfuswseldiij.supabase.co';   // e.g. 'https://xxxx.supabase.co'
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvbHF4ZWd4aGZ1c3dzZWxkaWlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MTM5OTEsImV4cCI6MjA5NTI4OTk5MX0.UP_E1fajbZro_0HFcdhv6OauYSQQ7dzNQdr0r1jI58U';   // your anon/public key
+const SUPABASE_URL = 'https://qolqxegxhfuswseldiij.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvbHF4ZWd4aGZ1c3dzZWxkaWlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MTM5OTEsImV4cCI6MjA5NTI4OTk5MX0.UP_E1fajbZro_0HFcdhv6OauYSQQ7dzNQdr0r1jI58U';
 
-// =============================================
-//  DB MODE — auto-detected
-//  If keys are filled → Supabase
-//  If keys are empty  → localStorage (offline)
-// =============================================
-const USE_SUPABASE = SUPABASE_URL !== 'https://qolqxegxhfuswseldiij.supabase.co' && SUPABASE_KEY !== 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvbHF4ZWd4aGZ1c3dzZWxkaWlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MTM5OTEsImV4cCI6MjA5NTI4OTk5MX0.UP_E1fajbZro_0HFcdhv6OauYSQQ7dzNQdr0r1jI58U';
-let db = null;
-if (USE_SUPABASE) {
-  const { createClient } = supabase;
-  db = createClient(SUPABASE_URL, SUPABASE_KEY);
-}
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ===== STATE =====
 const state = {
@@ -31,90 +20,74 @@ document.addEventListener('DOMContentLoaded', async () => {
   setTodayDate();
   startClock();
   await loadTrades();
-  // show which mode is active
-  const badge = document.getElementById('db-badge');
-  if (badge) {
-    badge.textContent = USE_SUPABASE ? '☁ Supabase' : '💾 Local';
-    badge.style.color = USE_SUPABASE ? '#7aaeff' : '#C9A84C';
-  }
 });
 
 // =============================================
-//  DATA LAYER — Supabase or localStorage
+//  SUPABASE DATA LAYER
 // =============================================
 async function loadTrades() {
   showLoading(true);
   try {
-    if (USE_SUPABASE) {
-      const { data, error } = await db
-        .from('trades')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      state.trades = (data || []).map(mapRow);
-    } else {
-      state.trades = JSON.parse(localStorage.getItem('xau_trades') || '[]');
-    }
+    const { data, error } = await db
+      .from('trades')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    state.trades = (data || []).map(mapRow);
+    // update badge
+    const badge = document.getElementById('db-badge');
+    if (badge) { badge.textContent = '☁ Supabase'; badge.style.color = '#7aaeff'; }
   } catch (err) {
     console.error('Load error:', err.message);
-    showToast('Could not load trades: ' + err.message, false);
+    showToast('DB Error: ' + err.message, false);
+    // fallback to localStorage
+    state.trades = JSON.parse(localStorage.getItem('xau_trades') || '[]');
+    const badge = document.getElementById('db-badge');
+    if (badge) { badge.textContent = '💾 Local (offline)'; badge.style.color = '#C9A84C'; }
   }
   showLoading(false);
 }
 
 async function saveTrade(trade) {
-  if (USE_SUPABASE) {
-    const { error } = await db.from('trades').insert([{
-      trade_id:    trade.id,
-      date:        trade.date,
-      setup:       trade.setup,
-      liq_us:      trade.liqUS,
-      liq_in:      trade.liqIN,
-      entry_us:    trade.entryUS,
-      entry_in:    trade.entryIN,
-      entry_price: trade.entryPrice,
-      dir:         trade.dir,
-      outcome:     trade.out,
-      pnl:         trade.pnl,
-      notes:       trade.notes
-    }]);
-    if (error) throw error;
-  } else {
-    state.trades.unshift(trade);
-    localStorage.setItem('xau_trades', JSON.stringify(state.trades));
-  }
+  const { error } = await db.from('trades').insert([{
+    trade_id:    trade.id,
+    date:        trade.date,
+    setup:       trade.setup,
+    liq_us:      trade.liqUS    || null,
+    liq_in:      trade.liqIN    || null,
+    entry_us:    trade.entryUS  || null,
+    entry_in:    trade.entryIN  || null,
+    entry_price: trade.entryPrice || null,
+    dir:         trade.dir,
+    outcome:     trade.out,
+    pnl:         trade.pnl      || 0,
+    notes:       trade.notes    || null
+  }]);
+  if (error) throw error;
 }
 
 async function deleteFromDB(tradeId) {
-  if (USE_SUPABASE) {
-    const { error } = await db
-      .from('trades')
-      .delete()
-      .eq('trade_id', tradeId);
-    if (error) throw error;
-  } else {
-    state.trades = state.trades.filter(t => t.id !== tradeId);
-    localStorage.setItem('xau_trades', JSON.stringify(state.trades));
-  }
+  const { error } = await db
+    .from('trades')
+    .delete()
+    .eq('trade_id', tradeId);
+  if (error) throw error;
 }
 
-// map Supabase row → app trade shape
 function mapRow(r) {
-  // if already in app shape (localStorage), return as-is
-  if (r.liqUS !== undefined) return r;
   return {
     id:         r.trade_id,
-    date:       r.date,
-    setup:      r.setup,
-    liqUS:      r.liq_us,
-    liqIN:      r.liq_in,
-    entryUS:    r.entry_us,
-    entryIN:    r.entry_in,
-    entryPrice: r.entry_price,
-    dir:        r.dir,
-    out:        r.outcome,
-    pnl:        r.pnl || 0,
-    notes:      r.notes || ''
+    date:       r.date       || '',
+    setup:      r.setup      || '',
+    liqUS:      r.liq_us     || '',
+    liqIN:      r.liq_in     || '',
+    entryUS:    r.entry_us   || '',
+    entryIN:    r.entry_in   || '',
+    entryPrice: r.entry_price|| '',
+    dir:        r.dir        || '',
+    out:        r.outcome    || '',
+    pnl:        r.pnl        || 0,
+    notes:      r.notes      || ''
   };
 }
 
@@ -193,7 +166,6 @@ function pick(type, val, el) {
   });
   el.classList.add('sel-' + val);
 
-  // Hide liquidity section for Setup 1
   if (type === 'setup') {
     const liqCard = document.getElementById('liq-card');
     if (val === 'setup1') {
@@ -238,11 +210,11 @@ async function submitTrade() {
   try {
     await saveTrade(trade);
     await loadTrades();
-    showToast('Trade logged successfully ✓', true);
+    showToast('Trade logged ✓ — synced to all devices', true);
     resetForm();
   } catch (err) {
     console.error('Save error:', err.message);
-    showToast('Failed to save: ' + err.message, false);
+    showToast('Save failed: ' + err.message, false);
   }
 
   btn.textContent = 'Log This Trade';
@@ -273,7 +245,7 @@ async function deleteTrade(tradeId) {
     showToast('Trade deleted.', true);
   } catch (err) {
     console.error('Delete error:', err.message);
-    showToast('Failed to delete: ' + err.message, false);
+    showToast('Delete failed: ' + err.message, false);
   }
 }
 
@@ -340,7 +312,7 @@ function renderLog() {
   list.innerHTML = trades.map(t => {
     const pnlStr   = t.pnl > 0 ? `+$${t.pnl.toFixed(2)}` : t.pnl < 0 ? `-$${Math.abs(t.pnl).toFixed(2)}` : '$0';
     const pnlClass = t.pnl > 0 ? 'win' : t.pnl < 0 ? 'loss' : 'be';
-    const notes    = t.notes ? `<div class="tc-notes">${t.notes.slice(0, 90)}${t.notes.length > 90 ? '…' : ''}</div>` : '';
+    const notes    = t.notes ? `<div class="tc-notes">${t.notes.slice(0,90)}${t.notes.length>90?'…':''}</div>` : '';
     const liqLine  = t.setup !== 'setup1' && t.liqUS
       ? `<div class="tc-liq">Liq ${fmt12(t.liqUS)} EST / ${fmt12(t.liqIN)} IST</div>` : '';
     return `
@@ -373,8 +345,7 @@ function renderStats() {
   pnlEl.textContent = (s.net >= 0 ? '+' : '') + '$' + Math.abs(s.net).toFixed(2);
   pnlEl.className   = 'stat-val ' + (s.net >= 0 ? 'green' : 'red');
 
-  // Per-setup comparison
-  ['setup1', 'setup2'].forEach((setup, i) => {
+  ['setup1','setup2'].forEach((setup, i) => {
     const n  = i + 1;
     const st = calcStats(all.filter(x => x.setup === setup));
     document.getElementById(`s${n}-total`).textContent = st.total;
@@ -384,7 +355,6 @@ function renderStats() {
     spEl.className   = st.net >= 0 ? 'green' : 'red';
   });
 
-  // Bar chart
   const chart  = document.getElementById('chart');
   const recent = [...t].reverse().slice(-24);
   if (!recent.length) {
@@ -398,7 +368,6 @@ function renderStats() {
     }).join('');
   }
 
-  // History list
   const sl = document.getElementById('stats-list');
   if (!t.length) {
     sl.innerHTML = `<div class="empty-state" style="padding:1rem 0"><div>No trades yet</div></div>`;
