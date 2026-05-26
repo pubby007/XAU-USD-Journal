@@ -3,15 +3,15 @@
 //  Paste your keys here when ready.
 //  Leave as-is to use localStorage instead.
 // =============================================
-const SUPABASE_URL = '';   // e.g. 'https://xxxx.supabase.co'
-const SUPABASE_KEY = '';   // your anon/public key
+const SUPABASE_URL = 'https://qolqxegxhfuswseldiij.supabase.co';   // e.g. 'https://xxxx.supabase.co'
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvbHF4ZWd4aGZ1c3dzZWxkaWlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MTM5OTEsImV4cCI6MjA5NTI4OTk5MX0.UP_E1fajbZro_0HFcdhv6OauYSQQ7dzNQdr0r1jI58U';   // your anon/public key
 
 // =============================================
 //  DB MODE — auto-detected
 //  If keys are filled → Supabase
 //  If keys are empty  → localStorage (offline)
 // =============================================
-const USE_SUPABASE = SUPABASE_URL !== '' && SUPABASE_KEY !== '';
+const USE_SUPABASE = SUPABASE_URL !== 'https://qolqxegxhfuswseldiij.supabase.co' && SUPABASE_KEY !== 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvbHF4ZWd4aGZ1c3dzZWxkaWlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MTM5OTEsImV4cCI6MjA5NTI4OTk5MX0.UP_E1fajbZro_0HFcdhv6OauYSQQ7dzNQdr0r1jI58U';
 let db = null;
 if (USE_SUPABASE) {
   const { createClient } = supabase;
