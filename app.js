@@ -1,12 +1,12 @@
 // =============================================
 //  SUPABASE CONFIG — paste your keys here
 // =============================================
-const SUPABASE_URL  = 'YOUR_PROJECT_URL';   // e.g. https://xxxx.supabase.co
+const SUPABASE_URL  = 'https://qolqxegxhfuswseldiij.supabase.co';   // e.g. https://xxxx.supabase.co
 const SUPABASE_KEY  = 'YOUR_ANON_KEY';      // long anon/public key string
 // =============================================
 
 const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+const db = createClient(https://qolqxegxhfuswseldiij.supabase.co , eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvbHF4ZWd4aGZ1c3dzZWxkaWlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MTM5OTEsImV4cCI6MjA5NTI4OTk5MX0.UP_E1fajbZro_0HFcdhv6OauYSQQ7dzNQdr0r1jI58U);
 
 // ===== STATE =====
 const state = {
