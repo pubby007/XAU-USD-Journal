@@ -1,17 +1,80 @@
+// =============================================
+//  SUPABASE CONFIG — paste your keys here
+// =============================================
+const SUPABASE_URL  = 'https://qolqxegxhfuswseldiij.supabase.co';   // e.g. https://xxxx.supabase.co
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvbHF4ZWd4aGZ1c3dzZWxkaWlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MTM5OTEsImV4cCI6MjA5NTI4OTk5MX0.UP_E1fajbZro_0HFcdhv6OauYSQQ7dzNQdr0r1jI58U';      // long anon/public key string
+// =============================================
+
+const { createClient } = supabase;
+const db = createClient(https://qolqxegxhfuswseldiij.supabase.co, eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvbHF4ZWd4aGZ1c3dzZWxkaWlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MTM5OTEsImV4cCI6MjA5NTI4OTk5MX0.UP_E1fajbZro_0HFcdhv6OauYSQQ7dzNQdr0r1jI58U);
+
 // ===== STATE =====
 const state = {
-  trades: JSON.parse(localStorage.getItem('xau_trades') || '[]'),
+  trades: [],          // loaded from Supabase on init
   filter: 'all',
   statsFilter: 'all',
   sel: { dir: null, out: null, setup: null }
 };
 
 // ===== INIT =====
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   setTodayDate();
   startClock();
+  await loadTrades();
 });
 
+// ===== SUPABASE: LOAD ALL TRADES =====
+async function loadTrades() {
+  showLoading(true);
+  try {
+    const { data, error } = await db
+      .from('trades')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    state.trades = data || [];
+  } catch (err) {
+    console.error('Load error:', err);
+    showToast('Could not load trades. Check your Supabase config.', false);
+  }
+  showLoading(false);
+}
+
+// ===== SUPABASE: SAVE ONE TRADE =====
+async function saveTrade(trade) {
+  const { error } = await db.from('trades').insert([{
+    trade_id:    trade.id,
+    date:        trade.date,
+    setup:       trade.setup,
+    liq_us:      trade.liqUS,
+    liq_in:      trade.liqIN,
+    entry_us:    trade.entryUS,
+    entry_in:    trade.entryIN,
+    entry_price: trade.entryPrice,
+    dir:         trade.dir,
+    outcome:     trade.out,
+    pnl:         trade.pnl,
+    notes:       trade.notes
+  }]);
+  if (error) throw error;
+}
+
+// ===== SUPABASE: DELETE ONE TRADE =====
+async function deleteFromDB(tradeId) {
+  const { error } = await db
+    .from('trades')
+    .delete()
+    .eq('trade_id', tradeId);
+  if (error) throw error;
+}
+
+// ===== LOADING INDICATOR =====
+function showLoading(on) {
+  const el = document.getElementById('loading-bar');
+  if (el) el.style.display = on ? 'block' : 'none';
+}
+
+// ===== DATE =====
 function setTodayDate() {
   const d = new Date();
   document.getElementById('trade-date').value =
@@ -20,6 +83,7 @@ function setTodayDate() {
     String(d.getDate()).padStart(2, '0');
 }
 
+// ===== LIVE CLOCK =====
 function startClock() {
   function tick() {
     const now = new Date();
@@ -41,7 +105,7 @@ function switchTab(name, el) {
   if (name === 'stats') renderStats();
 }
 
-// ===== TIME SYNC =====
+// ===== TIME SYNC (EST → IST +5:30) =====
 function syncTime(fromId, toId) {
   const val = document.getElementById(fromId).value;
   if (!val) { document.getElementById(toId).value = ''; return; }
@@ -62,12 +126,11 @@ function pick(type, val, el) {
   });
   el.classList.add('sel-' + val);
 
-  // Show/hide Liquidity card based on setup
+  // Hide liquidity section for Setup 1
   if (type === 'setup') {
     const liqCard = document.getElementById('liq-card');
     if (val === 'setup1') {
       liqCard.style.display = 'none';
-      // clear liq values when hidden
       document.getElementById('liq-us').value = '';
       document.getElementById('liq-in').value = '';
     } else {
@@ -77,14 +140,15 @@ function pick(type, val, el) {
 }
 
 // ===== SUBMIT TRADE =====
-function submitTrade() {
+async function submitTrade() {
   const date = document.getElementById('trade-date').value;
   if (!date || !state.sel.dir || !state.sel.out || !state.sel.setup) {
     showToast('Please fill in date, setup, direction and outcome.', false);
     return;
   }
+
   const trade = {
-    id: Date.now(),
+    id:         Date.now(),
     date,
     setup:      state.sel.setup,
     liqUS:      document.getElementById('liq-us').value,
@@ -97,12 +161,26 @@ function submitTrade() {
     pnl:        parseFloat(document.getElementById('pnl').value) || 0,
     notes:      document.getElementById('notes').value.trim()
   };
-  state.trades.unshift(trade);
-  localStorage.setItem('xau_trades', JSON.stringify(state.trades));
-  showToast('Trade logged successfully ✓', true);
-  resetForm();
+
+  const btn = document.querySelector('.submit-btn');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+
+  try {
+    await saveTrade(trade);
+    await loadTrades();
+    showToast('Trade logged successfully ✓', true);
+    resetForm();
+  } catch (err) {
+    console.error('Save error:', err);
+    showToast('Failed to save. Check Supabase config.', false);
+  }
+
+  btn.textContent = 'Log This Trade';
+  btn.disabled = false;
 }
 
+// ===== RESET FORM =====
 function resetForm() {
   ['liq-us','liq-in','entry-us','entry-in','entry-price','pnl','notes'].forEach(id => {
     document.getElementById(id).value = '';
@@ -111,11 +189,11 @@ function resetForm() {
   document.querySelectorAll('.radio-btn').forEach(b => {
     b.className = b.className.replace(/\bsel-\S+/g, '').trim();
   });
-  // restore liquidity card visibility on reset
   document.getElementById('liq-card').style.display = 'block';
   setTodayDate();
 }
 
+// ===== TOAST =====
 function showToast(msg, ok) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -138,11 +216,35 @@ function setupLabel(s) {
 }
 
 function calcStats(trades) {
-  const wins    = trades.filter(x => x.out === 'win').length;
-  const net     = trades.reduce((a, x) => a + x.pnl, 0);
+  const wins    = trades.filter(x => x.outcome === 'win').length;
+  const net     = trades.reduce((a, x) => a + (x.pnl || 0), 0);
   const winPnls = trades.filter(x => x.pnl > 0).map(x => x.pnl);
   const avgWin  = winPnls.length ? winPnls.reduce((a, v) => a + v, 0) / winPnls.length : 0;
-  return { total: trades.length, wins, net, avgWin, wr: trades.length ? Math.round(wins / trades.length * 100) : null };
+  return {
+    total: trades.length,
+    wins,
+    net,
+    avgWin,
+    wr: trades.length ? Math.round(wins / trades.length * 100) : null
+  };
+}
+
+// map Supabase row → local trade shape
+function mapRow(r) {
+  return {
+    id:         r.trade_id,
+    date:       r.date,
+    setup:      r.setup,
+    liqUS:      r.liq_us,
+    liqIN:      r.liq_in,
+    entryUS:    r.entry_us,
+    entryIN:    r.entry_in,
+    entryPrice: r.entry_price,
+    dir:        r.dir,
+    out:        r.outcome,
+    pnl:        r.pnl || 0,
+    notes:      r.notes || ''
+  };
 }
 
 // ===== TRADE LOG FILTER =====
@@ -163,7 +265,7 @@ function setStatsFilter(f, el) {
 
 // ===== RENDER LOG =====
 function renderLog() {
-  let trades = state.trades;
+  let trades = state.trades.map(mapRow);
   const f = state.filter;
   if (f === 'setup1') trades = trades.filter(t => t.setup === 'setup1');
   else if (f === 'setup2') trades = trades.filter(t => t.setup === 'setup2');
@@ -205,17 +307,23 @@ function renderLog() {
 }
 
 // ===== DELETE TRADE =====
-function deleteTrade(id) {
+async function deleteTrade(tradeId) {
   if (!confirm('Delete this trade? This cannot be undone.')) return;
-  state.trades = state.trades.filter(t => t.id !== id);
-  localStorage.setItem('xau_trades', JSON.stringify(state.trades));
-  renderStats();
+  try {
+    await deleteFromDB(tradeId);
+    await loadTrades();
+    renderStats();
+    showToast('Trade deleted.', true);
+  } catch (err) {
+    console.error('Delete error:', err);
+    showToast('Failed to delete trade.', false);
+  }
 }
 
 // ===== RENDER STATS =====
 function renderStats() {
+  const all = state.trades.map(mapRow);
   const sf  = state.statsFilter;
-  const all = state.trades;
   const t   = sf === 'all' ? all : all.filter(x => x.setup === sf);
   const s   = calcStats(t);
 
@@ -224,10 +332,10 @@ function renderStats() {
   document.getElementById('s-wr').textContent    = s.wr !== null ? s.wr + '%' : '—';
   document.getElementById('s-aw').textContent    = s.avgWin ? '+$' + s.avgWin.toFixed(2) : '—';
   const pnlEl = document.getElementById('s-pnl');
-  pnlEl.textContent  = (s.net >= 0 ? '+' : '') + '$' + Math.abs(s.net).toFixed(2);
-  pnlEl.className    = 'stat-val ' + (s.net >= 0 ? 'green' : 'red');
+  pnlEl.textContent = (s.net >= 0 ? '+' : '') + '$' + Math.abs(s.net).toFixed(2);
+  pnlEl.className   = 'stat-val ' + (s.net >= 0 ? 'green' : 'red');
 
-  // Per-setup comparison boxes (always full data)
+  // Per-setup comparison boxes
   ['setup1', 'setup2'].forEach((setup, i) => {
     const n  = i + 1;
     const st = calcStats(all.filter(x => x.setup === setup));
